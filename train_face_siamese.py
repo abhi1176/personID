@@ -71,7 +71,7 @@ def face_siamese_model():
 def imgprcs(files, label):
     def read_img(image_file):
         img = tf.io.read_file(image_file)
-        img = tf.image.decode_jpeg(img, channels=3)
+        img = tf.image.decode_bmp(img, channels=3)
         img = tf.image.resize(img, IMG_SHAPE[:2])
         img = tf.image.convert_image_dtype(img, dtype=tf.float32)
         return img

@@ -41,3 +41,17 @@ python train_palm_print_siamese.py  # Check the script for command line argument
 python validate_palm_print_siamese.py -m models/palm_print_epochs1_lr0.0001_batch32
 ```
 
+## Train audio model
+```sh
+python train_audio_siamese.py  # Check the script for command line arguments
+# By default at the end of each epoch the training script only gives loss on first 10 folders
+
+# Validation on all the folders
+python validate_audio_siamese.py -m models/audio_epochs1_lr0.0001_batch32
+```
+
+## Train Siamese model with cascade_fusion on face + palm_print + audio
+```sh
+python cascade_fusion.py  # Check the script for command line arguments
+# By default at the end of each epoch the training script only gives loss on first 50 folders
+```
