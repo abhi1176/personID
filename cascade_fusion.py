@@ -217,7 +217,6 @@ def get_val_dataset(val_csv, batch_size, num_persons):
             (np.float32, np.float32, np.float32,
              np.float32, np.float32, np.float32),
             np.int32))
-    dataset = dataset.repeat()
     dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(2)
     return dataset

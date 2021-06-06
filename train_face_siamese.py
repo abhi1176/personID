@@ -16,7 +16,7 @@ from tensorflow.keras.applications import VGG16
 
 
 IMG_SHAPE = [224, 224, 3]
-lr = 0.0001
+lr = 0.001
 epochs = 1
 steps_per_epoch = 2000
 batch_size = 32
@@ -69,7 +69,8 @@ def face_siamese_model(learning_rate, loss):
     else:
         output = Dense(1, activation='sigmoid')(output)
     model = Model(inputs=[left_input, right_input], outputs=output)
-    model.compile(optimizer=Adam(lr=learning_rate), loss=loss)
+    model.compile(optimizer=Adam(lr=learning_rate), loss=loss,
+                  metrics=['accuracy'])
     return model
 
 
