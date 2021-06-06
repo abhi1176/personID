@@ -164,7 +164,7 @@ if __name__ == "__main__":
     print("[INFO] steps_per_epoch:", args.steps_per_epoch)
 
     save_model_as = "models/palm_print_epochs{}_lr{}_batch{}"
-    model_output = save_model_as.format(args.epochs, lr, args.batch_size)
+    save_model_as = save_model_as.format(args.epochs, lr, args.batch_size)
 
     model = palm_print_siamese_model()
     model.compile(optimizer=Adam(lr=args.learning_rate),
@@ -173,5 +173,6 @@ if __name__ == "__main__":
     history = model.fit(train_dataset, epochs=args.epochs,
                         steps_per_epoch=steps_per_epoch,
                         validation_data=val_dataset)
-    print("[INFO] Saving the model to {}".format(model_output))
-    model.save(model_output)
+    print("[INFO] Saving the model to {}".format(save_model_as))
+    os.makedirs(os.path.dirname(save_model_as), exist_ok=True)
+    model.save(save_model_as)

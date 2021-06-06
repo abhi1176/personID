@@ -146,65 +146,40 @@ def get_model():
     return siamese
 
 
-def generator(df, labels, stochastic):
+def generator(df, stochastic):
     def process():
         for idx, row in df.iterrows():
-            try:
-                label = labels[idx]
-            except:
-                label = labels
             yield (get_fragment(row.audio_left, stochastic),
-                   get_fragment(row.audio_right, stochastic)), label
+                   get_fragment(row.audio_right, stochastic)), row.label
     return process
 
 
 def get_train_dataset(train_csv, batch_size):
     df = pd.read_csv(train_csv, usecols=['audio', 'label'])
     df.drop_duplicates(inplace=True)
-    all_dataframe = df.join(df, lsuffix="_left", rsuffix="_right", how='cross')
+    all_df = df.join(df, lsuffix="_left", rsuffix="_right", how='cross')
 
     # Only keep pairs where left_img and right_img are different
-    all_dataframe = all_dataframe[
-            all_dataframe.audio_left != all_dataframe.audio_right]
+    all_df = all_df[all_df.audio_left != all_df.audio_right]
+    all_df['label'] = np.where((all_df.label_left == all_df.label_right), 1, 0)
 
     # Dataframe where left_img and right_img are of same person
-    pos_dataframe = all_dataframe[
-        all_dataframe.label_left == all_dataframe.label_right][
-            ['audio_left', 'audio_right']]
-
+    pos_df = all_df[all_df.label == 1][['audio_left', 'audio_right', 'label']]
+    print("No. of positive samples:", len(pos_df.values))
 
     # Dataframe where left_img and right_img are of different person
-    neg_dataframe = all_dataframe[
-        all_dataframe.label_left != all_dataframe.label_right][
-            ['audio_left', 'audio_right']]
+    neg_df = all_df[all_df.label == 0][['audio_left', 'audio_right', 'label']]
+    neg_df = neg_df.sample(pos_df.shape[0])
+    print("No. of negative samples:", len(neg_df.values))
 
-    neg_dataframe = neg_dataframe.sample(pos_dataframe.shape[0])
-
-    print("[INFO] Reading positive dataset_generator..")
-    print("No. of positive samples:", len(pos_dataframe.values))
-    pos_dataset = tf.data.Dataset.from_generator(generator(pos_dataframe, 1, True),
+    df = pd.concat([pos_df, neg_df])
+    dataset = tf.data.Dataset.from_generator(generator(df, True),
         output_shapes=(([n_seconds*SAMPLING_RATE, 1], [n_seconds*SAMPLING_RATE, 1]),
                        []),
-        output_types=((np.float32, np.float32), np.int32))
-    # pos_dataset = tf.data.Dataset.from_tensor_slices(pos_dataframe.values)
-    # pos_dataset = pos_dataset.map(lambda x: (x, 1)).shuffle(1000)
-
-    print("[INFO] Reading negative dataset_generator..")
-    print("No. of negative samples:", len(neg_dataframe.values))
-    neg_dataset = tf.data.Dataset.from_generator(generator(neg_dataframe, 0, True),
-        output_shapes=(([n_seconds*SAMPLING_RATE, 1], [n_seconds*SAMPLING_RATE, 1]),
-                       []),
-        output_types=((np.float32, np.float32), np.int32))
-    # neg_dataset = tf.data.Dataset.from_tensor_slices(neg_dataframe.values)
-    # neg_dataset = neg_dataset.map(lambda x: (x, 0)).shuffle(10000)
-
-    # This is to handle data imbalance between same-pairs and different-pairs
-    sample_dataset = tf.data.experimental.sample_from_datasets(
-        [pos_dataset, neg_dataset], weights=[0.5, 0.5]).repeat()
-    # sample_dataset = sample_dataset.map(lambda x, y: audio_process(x, y, True))
-    sample_dataset = sample_dataset.batch(batch_size)
-    sample_dataset = sample_dataset.prefetch(2)
-    return sample_dataset
+        output_types=((np.float32, np.float32), np.int32)).repeat()
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(2)
+    return dataset
 
 
 def get_val_dataset(train_csv, val_csv, batch_size, num_person=10):
@@ -223,9 +198,10 @@ def get_val_dataset(train_csv, val_csv, batch_size, num_person=10):
     all_df = anchor_df.join(val_df, lsuffix="_left", rsuffix="_right", how='cross')
     all_df = all_df[all_df.audio_left != all_df.audio_right]
     labels = np.where((all_df.label_left == all_df.label_right), 1, 0)
+    all_df['label'] = -1
     all_df.drop(columns=["label_left", "label_right"], inplace=True)
-    # dataset = tf.data.Dataset.from_tensor_slices((all_df.values, labels))
-    dataset = tf.data.Dataset.from_generator(generator(all_df, labels, False),
+
+    dataset = tf.data.Dataset.from_generator(generator(all_df, False),
         output_shapes=(([n_seconds*SAMPLING_RATE, 1], [n_seconds*SAMPLING_RATE, 1]),
                        []),
         output_types=((np.float32, np.float32), np.int32))
@@ -259,12 +235,13 @@ if __name__ == "__main__":
     print("[INFO] steps_per_epoch:", args.steps_per_epoch)
 
     save_model_as = "models/audio_epochs{}_lr{}_batch{}"
-    model_output = save_model_as.format(args.epochs, lr, args.batch_size)
+    save_model_as = save_model_as.format(args.epochs, lr, args.batch_size)
 
     model = get_model()
 
     history = model.fit(train_dataset, epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         validation_data=val_dataset)
-    print("[INFO] Saving the model to {}".format(model_output))
-    model.save(model_output)
+    print("[INFO] Saving the model to {}".format(save_model_as))
+    os.makedirs(os.path.dirname(save_model_as), exist_ok=True)
+    model.save(save_model_as)
