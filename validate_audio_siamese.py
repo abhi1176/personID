@@ -82,9 +82,11 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", required=True)
     parser.add_argument("-t", "--threshold", default=threshold, type=float)
     parser.add_argument("-b", "--batch-size", default=32, type=int)
+    parser.add_argument("-p", "--num-persons", default=10, type=int)
     args = parser.parse_args()
     model = load_model(args.model)
     val_dataset, y_true = get_val_dataset("datasets/train.csv", "datasets/val.csv",
-                                          batch_size=args.batch_size)
+                                          batch_size=args.batch_size,
+                                          num_persons=args.num_persons)
     y_pred = model.predict(val_dataset).flatten()
     print("Accuracy: {}".format(calc_accuracy(y_true, y_pred, args.threshold)))

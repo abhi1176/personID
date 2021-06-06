@@ -19,7 +19,7 @@ from tensorflow.keras.applications import VGG16
 
 lr = 0.0001
 epochs = 1
-steps_per_epoch = 2000
+steps_per_epoch = 100
 batch_size = 32
 SAMPLING_RATE = 16000
 

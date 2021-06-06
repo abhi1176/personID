@@ -23,11 +23,11 @@ def imgprcs(files):
     return (read_img(files[0]), read_img(files[1])), -1
 
 
-def get_val_dataset(train_csv, val_csv, batch_size, num_person=10):
+def get_val_dataset(train_csv, val_csv, batch_size, num_persons=10):
     anchor_df = pd.read_csv(train_csv, usecols=['face', 'label'])
 
     # Select only a few persons for validation
-    persons = np.unique(anchor_df.label)[:10]
+    persons = np.unique(anchor_df.label)[:num_persons]
     anchor_df = anchor_df[anchor_df.label.isin(persons)]
     anchor_df.drop_duplicates(inplace=True)
 
@@ -57,10 +57,12 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", required=True)
     parser.add_argument("-t", "--threshold", default=threshold, type=float)
     parser.add_argument("-b", "--batch-size", default=32, type=int)
+    parser.add_argument("-p", "--num-persons", default=10, type=int)
     args = parser.parse_args()
     model = load_model(args.model, custom_objects={
         'loss': contrastive_loss, 'contrastive_loss': contrastive_loss})
     val_dataset, y_true = get_val_dataset("datasets/train.csv", "datasets/val.csv",
-                                          batch_size=args.batch_size)
+                                          batch_size=args.batch_size,
+                                          num_persons=args.num_persons)
     y_pred = model.predict(val_dataset).flatten()
     print("Accuracy: {}".format(calc_accuracy(y_true, y_pred, args.threshold)))
