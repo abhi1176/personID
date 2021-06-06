@@ -17,7 +17,6 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.applications import VGG16
 
 
-IMG_SHAPE = [224, 224, 3]
 lr = 0.0001
 epochs = 1
 steps_per_epoch = 2000
@@ -99,6 +98,7 @@ def audio_baseline_model(filters, embedding_dimension, input_shape=None, dropout
     encoder.add(GlobalMaxPool1D())
 
     encoder.add(Dense(embedding_dimension))
+    encoder.summary()
     return encoder
 
 
@@ -124,11 +124,10 @@ def build_siamese_net(encoder, input_shape, distance_metric='uniform_euclidean')
             lambda x: K.sqrt(K.sum(K.square(x), axis=-1, keepdims=True)), name='euclidean_distance'
         )(embedded_distance)
         output = Dense(1, activation='sigmoid')(embedded_distance)
-
     return Model(inputs=[input_1, input_2], outputs=output)
 
 
-def get_model():
+def get_model(learning_rate):
     ################
     # Define model #
     ################
@@ -139,7 +138,7 @@ def get_model():
                                    input_shape=(input_length, 1),
                                    dropout=dropout)
     siamese = build_siamese_net(encoder, (input_length, 1), distance_metric='uniform_euclidean')
-    opt = Adam(clipnorm=1.)
+    opt = Adam(clipnorm=1., lr=learning_rate)
     siamese.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
     # plot_model(siamese, show_shapes=True, to_file='audio_siamese.png')
     siamese.summary()
@@ -169,10 +168,11 @@ def get_train_dataset(train_csv, batch_size):
 
     # Dataframe where left_img and right_img are of different person
     neg_df = all_df[all_df.label == 0][['audio_left', 'audio_right', 'label']]
+    num_neg_samples = 2 * pos_df.shape[0]
     neg_df = neg_df.sample(pos_df.shape[0])
     print("No. of negative samples:", len(neg_df.values))
 
-    df = pd.concat([pos_df, neg_df])
+    df = pd.concat([pos_df, neg_df]).sample(frac=1)
     dataset = tf.data.Dataset.from_generator(generator(df, True),
         output_shapes=(([n_seconds*SAMPLING_RATE, 1], [n_seconds*SAMPLING_RATE, 1]),
                        []),
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     save_model_as = "models/audio_epochs{}_lr{}_batch{}"
     save_model_as = save_model_as.format(args.epochs, lr, args.batch_size)
 
-    model = get_model()
+    model = get_model(args.learning_rate)
 
     history = model.fit(train_dataset, epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
