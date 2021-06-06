@@ -1,4 +1,4 @@
-import cv2
+
 import tensorflow as tf
 import os
 import numpy as np
@@ -20,7 +20,7 @@ lr = 0.0001
 epochs = 1
 steps_per_epoch = 2000
 batch_size = 32
-embedding_dim = 1024
+embedding_dim = 64
 
 
 def euclidean_distance(left_right_feats):
@@ -53,7 +53,7 @@ def palm_print_model():
     # x = Dropout(0.5)(x)
     x = Dense(4096, activation='relu')(x)
     # x = Dropout(0.5)(x)
-    x = Dense(embedding_dim)(x)
+    x = Dense(embedding_dim, activation='relu')(x)
     return Model(model.inputs, x)
 
 

@@ -1,5 +1,4 @@
 
-import cv2
 import tensorflow as tf
 import os
 import numpy as np
@@ -31,16 +30,9 @@ n_seconds = 3
 downsampling = 4
 batchsize = 64
 filters = 128
-embedding_dimension = 64
+embedding_dim = 64
 dropout = 0.0
-training_set = ['train-clean-100', 'train-clean-360']
-validation_set = 'dev-clean'
 pad = True
-num_epochs = 50
-evaluate_every_n_batches = 500
-num_evaluation_tasks = 500
-n_shot_classification = 1
-k_way_classification = 5
 
 
 # stochastic is True for training, else False
@@ -72,7 +64,7 @@ def get_fragment(wav_file, stochastic, seconds=n_seconds):
     return np.expand_dims(sample, axis=-1)
 
 
-def audio_baseline_model(filters, embedding_dimension, input_shape=None, dropout=0.05):
+def audio_baseline_model(filters, embedding_dim, input_shape, dropout=0.05):
     encoder = Sequential()
     encoder.add(Input(shape=input_shape))
     encoder.add(Conv1D(filters, 32, padding='same', activation='relu'))
@@ -98,8 +90,8 @@ def audio_baseline_model(filters, embedding_dimension, input_shape=None, dropout
 
     encoder.add(GlobalMaxPool1D())
 
-    encoder.add(Dense(embedding_dimension))
-    encoder.summary()
+    encoder.add(Dense(embedding_dim, activation='relu'))
+    # encoder.summary()
     return encoder
 
 
@@ -135,20 +127,21 @@ def get_model(learning_rate):
     # input_length = int(SAMPLING_RATE * n_seconds / downsampling)
     input_length = int(SAMPLING_RATE * n_seconds)
 
-    encoder = audio_baseline_model(filters, embedding_dimension,
+    encoder = audio_baseline_model(filters, embedding_dim,
                                    input_shape=(input_length, 1),
                                    dropout=dropout)
     siamese = build_siamese_net(encoder, (input_length, 1), distance_metric='uniform_euclidean')
     opt = Adam(clipnorm=1., lr=learning_rate)
     siamese.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
     # plot_model(siamese, show_shapes=True, to_file='audio_siamese.png')
-    siamese.summary()
+    # siamese.summary()
     return siamese
 
 
 def generator(df, stochastic):
     def process():
         for idx, row in df.iterrows():
+            sample_dataset = sample_dataset.map(imgprcs)
             yield (get_fragment(row.audio_left, stochastic),
                    get_fragment(row.audio_right, stochastic)), row.label
     return process
