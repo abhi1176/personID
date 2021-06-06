@@ -52,7 +52,6 @@ def calc_accuracy(y_true, y_pred, threshold):
 
 
 if __name__ == "__main__":
-    model = "model_face_epochs1_lr0.0001_batch32"
     parser = ArgumentParser()
     parser.add_argument("-m", "--model", required=True)
     parser.add_argument("-t", "--threshold", default=threshold, type=float)
@@ -61,8 +60,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     model = load_model(args.model, custom_objects={
         'loss': contrastive_loss, 'contrastive_loss': contrastive_loss})
-    val_dataset, y_true = get_val_dataset("datasets/train.csv", "datasets/val.csv",
-                                          batch_size=args.batch_size,
-                                          num_persons=args.num_persons)
+    val_dataset, y_true = get_val_dataset(
+        "datasets/train.csv", "datasets/val.csv",
+        batch_size=args.batch_size, num_persons=args.num_persons)
     y_pred = model.predict(val_dataset).flatten()
     print("Accuracy: {}".format(calc_accuracy(y_true, y_pred, args.threshold)))

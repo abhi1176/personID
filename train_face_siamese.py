@@ -57,14 +57,20 @@ def face_model():
     return Model(model.inputs, x)
 
 
-def face_siamese_model():
+def face_siamese_model(learning_rate, loss):
     feature_extractor = face_model()
     left_input = Input(shape=IMG_SHAPE)
     right_input = Input(shape=IMG_SHAPE)
     left_feats = feature_extractor(left_input)
     right_feats = feature_extractor(right_input)
-    distance = Lambda(euclidean_distance)([left_feats, right_feats])
-    return Model(inputs=[left_input, right_input], outputs=distance)
+    output = Lambda(euclidean_distance)([left_feats, right_feats])
+    if loss == "contrastive_loss":
+        loss = contrastive_loss
+    else:
+        output = Dense(1, activation='sigmoid')(output)
+    model = Model(inputs=[left_input, right_input], outputs=output)
+    model.compile(optimizer=Adam(lr=learning_rate), loss=loss)
+    return model
 
 
 @tf.autograph.experimental.do_not_convert
@@ -144,33 +150,25 @@ def get_val_dataset(train_csv, val_csv, batch_size, num_person=10):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-b", "--batch-size", default=batch_size, type=int)
-    parser.add_argument("-l", "--learning-rate", default=lr, type=float)
+    parser.add_argument("-r", "--learning-rate", default=lr, type=float)
     parser.add_argument("-e", "--epochs", default=epochs, type=int)
     parser.add_argument("-s", "--steps-per-epoch", default=steps_per_epoch, type=int)
+    parser.add_argument("-l", "--loss", default="contrastive_loss")
     args = parser.parse_args()
 
     train_dataset = get_train_dataset('datasets/train.csv', batch_size=args.batch_size)
     val_dataset = get_val_dataset("datasets/train.csv", "datasets/val.csv", batch_size=args.batch_size)
 
-    # df = pd.read_csv('train.csv', usecols=['face'])
-    # num_faces_in_train = df.drop_duplicates().shape[0]
-    # steps_per_epoch = (num_faces_in_train**2)//args.batch_size
-
-    # df = pd.read_csv('val.csv', usecols=['face'])
-    # num_faces_in_val = df.drop_duplicates().shape[0]
-    # validation_steps = (num_faces_in_val**2)//args.batch_size
     print("[INFO] learning rate:", args.learning_rate)
     print("[INFO] epochs:", args.epochs)
     print("[INFO] batch size:", args.batch_size)
     print("[INFO] steps_per_epoch:", args.steps_per_epoch)
 
-    save_model_as = "models/face_epochs{}_lr{}_batch{}"
-    save_model_as = save_model_as.format(args.epochs, lr, args.batch_size)
+    save_model_as = "models/face_epochs{}_lr{}_batch{}_loss{}"
+    save_model_as = save_model_as.format(args.epochs, args.learning_rate,
+                                         args.batch_size, args.loss)
 
-    model = face_siamese_model()
-    model.compile(optimizer=Adam(lr=args.learning_rate),
-                  loss=contrastive_loss)
-
+    model = face_siamese_model(args.learning_rate, args.loss)
     history = model.fit(train_dataset, epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         validation_data=val_dataset)
