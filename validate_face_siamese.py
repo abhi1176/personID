@@ -40,6 +40,7 @@ def get_val_dataset(train_csv, val_csv, batch_size, num_persons=10):
     all_df = all_df[all_df.face_left != all_df.face_right]
     labels = np.where((all_df.label_left == all_df.label_right), 1, 0)
     all_df.drop(columns=["label_left", "label_right"], inplace=True)
+    print(all_df.head())
     dataset = tf.data.Dataset.from_tensor_slices(all_df.values)
     dataset = dataset.map(imgprcs)
     dataset = dataset.batch(batch_size)
@@ -64,4 +65,6 @@ if __name__ == "__main__":
         "datasets/train.csv", "datasets/val.csv",
         batch_size=args.batch_size, num_persons=args.num_persons)
     y_pred = model.predict(val_dataset).flatten()
+    for i, j in zip(y_pred, y_true):
+        print(i, j)
     print("Accuracy: {}".format(calc_accuracy(y_true, y_pred, args.threshold)))

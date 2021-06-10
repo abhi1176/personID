@@ -85,7 +85,8 @@ def cascade_siamese_model(learning_rate=learning_rate):
     output = Dense(1, activation='sigmoid', name='output')(embedded_distance)
     siamese = Model(inputs=[input_f1, input_p1, input_a1, input_f2, input_p2, input_a2],
                     outputs=output)
-    siamese.compile(loss='binary_crossentropy', optimizer=Adam(lr=learning_rate), metrics=['accuracy'])
+    siamese.compile(loss='binary_crossentropy', optimizer=Adam(lr=learning_rate),
+                    metrics=['accuracy'])
     # siamese.summary()
     return siamese
 

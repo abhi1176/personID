@@ -20,8 +20,8 @@ num_persons = 300
 
 data_dir = "datasets"
 
-face_dir = os.path.join(data_dir, "Face2500")
-palm_dir = os.path.join(data_dir, "CASIA-PalmprintV1")
+face_dir = os.path.join(data_dir, "FaceCropped")
+palm_dir = os.path.join(data_dir, "PalmCropped")
 sign_dir = os.path.join(data_dir, "signature")
 audio_dir = os.path.join(data_dir, "voxceleb1_wavfile")  # 193 <-- 192 149 <-- 148
 
