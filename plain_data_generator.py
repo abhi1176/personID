@@ -162,7 +162,7 @@ class PersonIDSequence(Sequence):
                     mask.append(False)
             return mask
         rate, signal = wavfile.read(audio_file)
-        mask = envelop(signal, rate, self.config['audio_clean_threshold'])
+        # mask = envelop(signal, rate, self.config['audio_clean_threshold'])
         signal = signal[mask]
         step = int(rate*self.config['audio_seconds'])
         rand_idx = np.random.randint(0, signal.shape[0]-step)
