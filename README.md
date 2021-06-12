@@ -1,6 +1,9 @@
 
 # personID
-Person Identification using Siamese Network
+Person Identification
+
+## Setup
+> pip install -r requirements.txt
 
 
 ## Download `datasets`
