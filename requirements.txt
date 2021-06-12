@@ -1,5 +1,9 @@
+mtcnn
+opencv-python
 numpy
 pandas
 git+https://github.com/rcmalli/keras-vggface.git
 scipy
 tqdm
+python_speech_features
+tensorflow==2.3.0
