@@ -34,16 +34,16 @@ model = Model(inputs=inputs, outputs=merge_3)
 model.compile(optimizer=Adam(0.001), loss="categorical_crossentropy",
               metrics=['accuracy'])
 
-# train_ds = PersonIDSequence(csv_file='../datasets/train.csv', batch_size=16)
-# val_ds = PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16)
+train_ds = PersonIDSequence(csv_file='../datasets/train.csv', batch_size=16)
+val_ds = PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16)
 
-from plain_data_generator_2 import PersonIDSequence
-train_ds = tf.data.Dataset.from_generator(
-    PersonIDSequence(csv_file='../datasets/train.csv', batch_size=16))
-train_ds = train_ds.prefetch(2)
+# from plain_data_generator_2 import PersonIDSequence
+# train_ds = tf.data.Dataset.from_generator(
+#     PersonIDSequence(csv_file='../datasets/train.csv', batch_size=16))
+# train_ds = train_ds.prefetch(2)
 
-val_ds = tf.data.Dataset.from_generator(
-    PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16))
-val_ds = val_ds.prefetch(2)
+# val_ds = tf.data.Dataset.from_generator(
+#     PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16))
+# val_ds = val_ds.prefetch(2)
 
 model.fit(train_ds, epochs=2)

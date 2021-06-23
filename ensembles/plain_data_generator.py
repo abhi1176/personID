@@ -114,7 +114,6 @@ class PersonIDSequence(Sequence):
         print("Loading all faces...")
         self.face_by_file = {file: self.load_face(file)
                              for file in np.unique(self.df.face)}
-        print(list(self.face_by_file.keys()))
         print("Loading all palm_prints...")
         self.palm_print_by_file = {file: self.load_palm_print(file)
                                    for file in np.unique(self.df.palm_print)}
@@ -127,7 +126,11 @@ class PersonIDSequence(Sequence):
         return math.ceil(self.df.shape[0] / self.batch_size)
 
     def load_face(self, img_file):
-        image = cv2.imread(os.path.join(self.relative_path, img_file))[::-1]  # Converting BGR to RGB
+        try:
+            image = cv2.imread(os.path.join(self.relative_path, img_file))[::-1]  # Converting BGR to RGB
+        except:
+            print("Failed at ", img_file)
+            raise
         if self.extract_face:
             image = extract_face_from_img(image)
         image = cv2.resize(image, self.config['face_shape'])
@@ -139,9 +142,13 @@ class PersonIDSequence(Sequence):
         image = cv2.imread(os.path.join(self.relative_path, image_file))  # Read as Gray
         if self.extract_palm:
             image = extract_palm_from_img(image)
-        image = cv2.resize(image, self.config['palm_shape'])
+        try:
+            image = cv2.resize(image, self.config['palm_shape'])
         # image = np.expand_dims(image, axis=-1)
-        image = image * 1./255
+            image = image * 1./255
+        except:
+            print("Failed at ", image_file)
+            raise
         return image
 
     def load_signature(self, text_file):
