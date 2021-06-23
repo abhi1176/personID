@@ -97,55 +97,30 @@ def extract_palm_from_img(image):
     return palm
 
 
-class PersonIDSequence(Sequence):
 
-    def __init__(self, csv_file, batch_size, config_file="config.json",
-                 extract_face=False, extract_palm=False):
-        self.relative_path = ".."
-        self.df = pd.read_csv(csv_file, index_col=0).sample(frac=1)  # Shuffle
-        self.labels = list(np.unique(self.df.label))
-        self.num_labels = len(self.labels)
-        self.batch_size = batch_size
-        self.extract_face = extract_face
-        self.extract_palm = extract_palm
-        with open(config_file) as file:
-            self.config = json.load(file)
+def PersonIDSequence(csv_file, batch_size, config_file="config.json",
+                     extract_face=False, extract_palm=False):
 
-        print("Loading all faces...")
-        self.face_by_file = {file: self.load_face(file)
-                             for file in np.unique(self.df.face)}
-        print(list(self.face_by_file.keys()))
-        print("Loading all palm_prints...")
-        self.palm_print_by_file = {file: self.load_palm_print(file)
-                                   for file in np.unique(self.df.palm_print)}
-        print("Loading all audios...")
-        self.audio_by_file = {file: self.load_audio(file)
-                              for file in np.unique(self.df.audio)}
-        # self.signature_by_file = {file: load_signature(file) for file in np.unique(df.signature)}
-
-    def __len__(self):
-        return math.ceil(self.df.shape[0] / self.batch_size)
-
-    def load_face(self, img_file):
-        image = cv2.imread(os.path.join(self.relative_path, img_file))[::-1]  # Converting BGR to RGB
-        if self.extract_face:
+    def load_face(img_file):
+        image = cv2.imread(os.path.join(relative_path, img_file))[::-1]  # Converting BGR to RGB
+        if extract_face:
             image = extract_face_from_img(image)
-        image = cv2.resize(image, self.config['face_shape'])
+        image = cv2.resize(image, config['face_shape'])
         image = image.astype(np.float32)
         image = preprocess_input(image, version=2)
         return image
 
-    def load_palm_print(self, image_file):
-        image = cv2.imread(os.path.join(self.relative_path, image_file))  # Read as Gray
-        if self.extract_palm:
+    def load_palm_print(image_file):
+        image = cv2.imread(os.path.join(relative_path, image_file))  # Read as Gray
+        if extract_palm:
             image = extract_palm_from_img(image)
-        image = cv2.resize(image, self.config['palm_shape'])
+        image = cv2.resize(image, config['palm_shape'])
         # image = np.expand_dims(image, axis=-1)
         image = image * 1./255
         return image
 
-    def load_signature(self, text_file):
-        data = np.loadtxt(os.path.join(self.relative_path, text_file), skiprows=1, dtype=np.float32)
+    def load_signature(text_file):
+        data = np.loadtxt(os.path.join(relative_path, text_file), skiprows=1, dtype=np.float32)
         # Column-wise min-max scaling
         diff = data.max(axis=0) - data.min(axis=0)
         diff = np.where(diff == 0, 1, diff)  # To handle division-by-zero error
@@ -153,18 +128,18 @@ class PersonIDSequence(Sequence):
         # Smoothing by rolling-window-mean-subtraction
         for i in range(data.shape[1]):
             data[:, i] -= pd.Series(data[:, i]).rolling(
-                window=self.config['rolling_window'], center=True).mean()
-        if len(data) < self.config['max_strokes']:
-            pad = self.config['max_strokes'] - len(data)
+                window=config['rolling_window'], center=True).mean()
+        if len(data) < config['max_strokes']:
+            pad = config['max_strokes'] - len(data)
             data = np.pad(data, ((0, pad), (0, 0)))  # Pad at the bottom
         else:
-            n = np.linspace(0, len(data)-1, self.config['max_strokes'],
+            n = np.linspace(0, len(data)-1, config['max_strokes'],
                             dtype=np.int32)
             data = data[n]
         # data = np.expand_dims(data, axis=-1)
         return data
 
-    def load_audio(self, audio_file):
+    def load_audio(audio_file):
         def envelop(signal, rate, threshold):
             mask = []
             y = pd.Series(signal).apply(np.abs)
@@ -175,30 +150,52 @@ class PersonIDSequence(Sequence):
                 else:
                     mask.append(False)
             return mask
-        rate, signal = wavfile.read(os.path.join(self.relative_path, audio_file))
-        # mask = envelop(signal, rate, self.config['audio_clean_threshold'])
+        rate, signal = wavfile.read(os.path.join(relative_path, audio_file))
+        # mask = envelop(signal, rate, config['audio_clean_threshold'])
         # signal = signal[mask]
-        step = int(rate*self.config['audio_seconds'])
+        step = int(rate*config['audio_seconds'])
         rand_idx = np.random.randint(0, signal.shape[0]-step)
         sample = signal[rand_idx:rand_idx+step]
         sample = mfcc(sample, rate,
-                      numcep=self.config['audio_numcep'],
-                      nfilt=self.config['audio_nfilt'],
-                      nfft=self.config['audio_nfft'])
+                      numcep=config['audio_numcep'],
+                      nfilt=config['audio_nfilt'],
+                      nfft=config['audio_nfft'])
         sample = np.expand_dims(sample, axis=-1)
         return sample.astype(np.float32)
 
-    def __getitem__(self, idx):
-        batch = self.df.iloc[idx * self.batch_size:(idx + 1) * self.batch_size]
+    relative_path = ".."
+    df = pd.read_csv(csv_file, index_col=0).sample(frac=1)  # Shuffle
+    labels = list(np.unique(df.label))
+    num_labels = len(labels)
+    batch_size = batch_size
+    extract_face = extract_face
+    extract_palm = extract_palm
+    with open(config_file) as file:
+        config = json.load(file)
+
+    print("Loading all faces...")
+    face_by_file = {file: load_face(file) for file in np.unique(df.face)}
+
+    print("Loading all palm_prints...")
+    palm_print_by_file = {file: load_palm_print(file)
+                          for file in np.unique(df.palm_print)}
+    print("Loading all audios...")
+    audio_by_file = {file: load_audio(file) for file in np.unique(df.audio)}
+    # signature_by_file = {file: load_signature(file) for file in np.unique(df.signature)}
+
+    idx = 0
+    n_rows = df.shape[0]
+
+    def process():
+        batch = df.iloc[idx * batch_size:(idx + 1) * batch_size]
         y = batch.pop('label')
         X = batch
-        faces = np.array([self.face_by_file[file] for file in X.face])
-        palm_prints = np.array([self.palm_print_by_file[file] for file in X.palm_print])
-        audios = np.array([self.audio_by_file[file] for file in X.audio])
-        y_indices = [to_categorical(self.labels.index(i), num_classes=self.num_labels)
+        faces = np.array([face_by_file[file] for file in X.face])
+        palm_prints = np.array([palm_print_by_file[file] for file in X.palm_print])
+        audios = np.array([audio_by_file[file] for file in X.audio])
+        y_indices = [to_categorical(labels.index(i), num_classes=num_labels)
                      for i in y.values]
-        # return (faces, palm_prints, audios, signatures), np.array(y_indices)
-        return (faces, palm_prints, audios), np.array(y_indices).astype(np.float32)
+        # yield (faces, palm_prints, audios, signatures), np.array(y_indices)
+        yield (faces, palm_prints, audios), np.array(y_indices).astype(np.float32)
+        idx = (idx + 1) % n_rows
 
-    def on_epoch_end(self):
-        self.df = self.df.sample(frac=1)  # Shuffle
