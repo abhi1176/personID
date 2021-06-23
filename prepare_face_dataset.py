@@ -13,6 +13,8 @@ face_dir = "datasets/Face2500"
 output_dir = "datasets/FaceCropped"
 shape = (224, 224)
 
+failures = []
+
 for img_file in glob(face_dir+"/*/*"):
     print("Working on", img_file)
     dirname = os.path.basename(os.path.dirname(img_file))
@@ -32,6 +34,7 @@ for img_file in glob(face_dir+"/*/*"):
         x1, y1, width, height = results[0]['box']
     except:
         print("[INFO] Unable to find face in: {}".format(filename))
+        failures.append(filename)
     else:
         # bug fix
         x1, y1 = abs(x1), abs(y1)
@@ -42,3 +45,5 @@ for img_file in glob(face_dir+"/*/*"):
         face = Image.fromarray(face)
         face = face.resize(shape)
         face.save(output_file)
+
+print("Failed to extract faces for: {}".format(failures))

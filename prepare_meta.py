@@ -21,7 +21,8 @@ num_persons = 300
 data_dir = "datasets"
 
 face_dir = os.path.join(data_dir, "FaceCropped")
-palm_dir = os.path.join(data_dir, "PalmCropped")
+# palm_dir = os.path.join(data_dir, "PalmCropped")
+palm_dir = os.path.join(data_dir, "CASIA-PalmprintV1")
 sign_dir = os.path.join(data_dir, "signature")
 audio_dir = os.path.join(data_dir, "voxceleb1_wavfile")  # 193 <-- 192 149 <-- 148
 
@@ -29,6 +30,8 @@ face_persons = sorted(os.listdir(face_dir))[:num_persons]
 palm_persons = sorted(os.listdir(palm_dir))[:num_persons]
 sign_persons = sorted(os.listdir(sign_dir))[:num_persons]
 audio_persons = sorted(os.listdir(audio_dir))[:num_persons]
+
+print(palm_persons)
 
 assert face_persons == palm_persons, "People are not same in face and plam directories"
 assert sign_persons == audio_persons, "People are not same in sign and audio directories"

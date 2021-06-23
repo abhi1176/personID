@@ -10,6 +10,7 @@ Person Identification
 > https://drive.google.com/drive/folders/1pm-jHY0Czy5bU9869StI4sebGCdggLCA
 * Download all the folders in the drive to `datasets` directory
 * It has been observed that voxceleb1_wavfile has 193 and 149 folders missing. These are needed when we train the fusion model.
+* The loudness of 157 is very low. This would be like a outlier. So replacing 157 with a copy of 156
 
 ## Generate faces
 ```sh

@@ -1,0 +1,14 @@
+{
+	"face_shape": [160, 160],
+
+	"palm_shape": [224, 224],
+
+	"max_strokes": 1000,
+	"rolling_window": 20,
+
+	"audio_numcep": 13,
+	"audio_nfilt": 26,
+	"audio_nfft": 512,
+	"audio_clean_threshold": 200,
+	"audio_seconds": 0.1
+}
