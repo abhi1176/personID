@@ -33,5 +33,6 @@ python prepare_meta.py
 # Generates datasets/train.csv, datasets/val.csv and datasets/test.csv
 ```
 
-## Train cascade fusion model
-> Run `cascade_fusion.ipynb` notebook
+> Train palmnet model using `standalone/palmnet_train.ipynb`
+> Train audio model using `standalone/audio_train.ipynb`
+> Train cascade_fusion using `ensembles/cascade_fusion.py`
