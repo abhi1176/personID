@@ -33,9 +33,10 @@ inputs = [face_model.inputs, palm_print_model.inputs, audio_model.inputs]
 model = Model(inputs=inputs, outputs=merge_3)
 model.compile(optimizer=Adam(0.001), loss="categorical_crossentropy",
               metrics=['accuracy'])
+model.summary()
 
-train_ds = PersonIDSequence(csv_file='../datasets/train.csv', batch_size=16)
-val_ds = PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16)
+train_ds = PersonIDSequence(csv_file='../datasets/train.csv', batch_size=64)
+val_ds = PersonIDSequence(csv_file='../datasets/val.csv', batch_size=64)
 
 # from plain_data_generator_2 import PersonIDSequence
 # train_ds = tf.data.Dataset.from_generator(
@@ -46,4 +47,5 @@ val_ds = PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16)
 #     PersonIDSequence(csv_file='../datasets/val.csv', batch_size=16))
 # val_ds = val_ds.prefetch(2)
 
-model.fit(train_ds, epochs=2)
+model.fit(train_ds, epochs=2, validation_data=val_ds)
+model.save("cascade_fusion.h5")

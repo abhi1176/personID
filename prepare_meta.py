@@ -31,8 +31,6 @@ palm_persons = sorted(os.listdir(palm_dir))[:num_persons]
 sign_persons = sorted(os.listdir(sign_dir))[:num_persons]
 audio_persons = sorted(os.listdir(audio_dir))[:num_persons]
 
-print(palm_persons)
-
 assert face_persons == palm_persons, "People are not same in face and plam directories"
 assert sign_persons == audio_persons, "People are not same in sign and audio directories"
 assert sign_persons == face_persons, "People are not same in sign and face directories"

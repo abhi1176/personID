@@ -34,5 +34,22 @@ python prepare_meta.py
 ```
 
 > Train palmnet model using `standalone/palmnet_train.ipynb`
+
 > Train audio model using `standalone/audio_train.ipynb`
-> Train cascade_fusion using `ensembles/cascade_fusion.py`
+
+```sh
+cd ensembles/
+
+# Cascade Fusion
+python cascasde_fusion.py
+
+# CNN Fusion
+python cnn_fusion.py
+
+# FC-CNN Fusion
+python fc_cnn_fusion.py
+
+# FC Fusion
+python fc_fusion.py
+```
+
